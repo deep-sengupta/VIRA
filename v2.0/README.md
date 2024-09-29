@@ -2,8 +2,8 @@
 
 # VIRA - Android APP
 <p>VIRA is a mobile application designed to help users with various queries by responding intelligently based on the provided prompt. The app features voice-to-text input, a dynamic chat interface, and seamless integration with the Gemini AI API to provide users with accurate and responsive answers.</p>
-<img src="https://github.com/user-attachments/assets/a55f0415-09da-48b3-add2-dcb9e641eae1" height="500" width="230"/>&nbsp;&nbsp;
-<img src="https://github.com/user-attachments/assets/e0935669-9263-4417-80d7-c5ca8972059a" height="500" width="230"/></div>
+<img src="https://github.com/user-attachments/assets/d38e1549-3729-412a-a353-a2ec7c742d8e" height="500" width="230"/>&nbsp;&nbsp;
+<img src="https://github.com/user-attachments/assets/ad56d466-0153-4bcd-97a8-a96dd92d8159" height="500" width="230"/></div>
 
 ## Getting Started
 #### Prerequisites
