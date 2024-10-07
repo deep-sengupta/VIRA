@@ -2,7 +2,7 @@
 
 # VIRA - Virtual Intelligent Response Assistant
 <p>VIRA is a chatbot web application designed to help users with various queries by responding intelligently based on the provided prompt.</p>
-<img width="624" alt="Interface" src="https://github.com/user-attachments/assets/7d42f3b7-e26b-46ea-85ec-c573d158a639"> </div>
+<img width="624" alt="Interface" src="https://github.com/user-attachments/assets/4a71d165-1543-4105-b2bd-0963ef65570a"> </div>
 
 ## Features
 - `Interactive UI`: A clean and responsive user interface for user interactions.
