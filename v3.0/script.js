@@ -171,14 +171,17 @@ const showTypingEffect = (text, textElement, incomingMessageDiv) => {
         }
         textElement.innerText += (currentWordIndex === 0 ? '' : ' ') + words[currentWordIndex++];
         incomingMessageDiv.querySelector(".icon").classList.add("hide");
+
         if(currentWordIndex === words.length){
             clearInterval(typingInterval);
             isResponseGenerating = false;
 
             const loadingDots = incomingMessageDiv.querySelector('.loading-dots');
             if(loadingDots) loadingDots.remove();
+
             localStorage.setItem("saved-chats", chatContainer.innerHTML);
             updateChatHistory();
+            enableStartChatButton();
         }
         scrollToBottom();
     }, 50);
@@ -308,11 +311,23 @@ const generateChatTitle = async (userPrompt) => {
     }
 };
 
+const disableStartChatButton = () => {
+    startChatMessage.style.pointerEvents = 'none';
+    startChatMessage.style.opacity = '0.5';
+};
+
+const enableStartChatButton = () => {
+    startChatMessage.style.pointerEvents = 'auto';
+    startChatMessage.style.opacity = '1';
+};
+
 const handleOutgoingChat = async () => {
     userMessage = typingForm.querySelector(".typing-input").value.trim() || userMessage;
     if(!userMessage || isResponseGenerating) return;
 
     isResponseGenerating = true;
+    disableStartChatButton();
+
     const html = `<div class="message-content outgoing-card">
                     <p class="text">${userMessage}</p>
                 </div>`;
@@ -330,7 +345,6 @@ const handleOutgoingChat = async () => {
     }
     showLoadingAnimation();
     saveCurrentChat();
-    isResponseGenerating = false;
 };
 
 const updateChatHistory = () => {
