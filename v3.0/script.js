@@ -16,6 +16,7 @@ let userMessage = null;
 let isResponseGenerating = false;
 let shouldAutoScroll = true;
 let currentChatIndex = null;
+let scrollingTimeout;
 
 const API_KEY = "API_KEY";
 const API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${API_KEY}`;
@@ -88,13 +89,15 @@ const displayChatSessions = () => {
 
         const title = session.title || `Session ${index + 1}`;
         sessionItem.innerHTML = `
-            ${title}
+            <span class="session-title">${title}</span>
             <span class="material-symbols-rounded delete-session-icon" data-index="${index}">delete</span>
         `;
+        
         sessionItem.querySelector(".delete-session-icon").addEventListener('click', (e) => {
             e.stopPropagation();
             deleteChatSession(index);
         });
+
         sessionItem.addEventListener('click', () => loadChatSession(index));
         historyList.appendChild(sessionItem);
     });
@@ -110,26 +113,38 @@ const loadChatSession = (index) => {
         hideHeader();
         chatHistoryModal.classList.remove('show');
         showStartChatMessage();
+
+        setTimeout(() => {
+            shouldAutoScroll = true;
+            scrollToBottom();
+        }, 0);
     }
 };
 
 const deleteChatSession = (index) => {
     let chatSessions = loadChatSessions();
+    const isCurrentChat = currentChatIndex === index;
     chatSessions.splice(index, 1);
     saveChatSessions(chatSessions);
     displayChatSessions();
 
-    clearCurrentChat();
-    header.style.display = "block";
-    hideStartChatMessage();
-    hideModal(chatHistoryModal);
+    if(isCurrentChat){
+        clearCurrentChat();
+        header.style.display = "block";
+        hideStartChatMessage();
+    }
+
+    if(currentChatIndex !== null && currentChatIndex > index){
+        currentChatIndex--;
+    }else if(chatSessions.length === 0){
+        currentChatIndex = null;
+    }
 };
 
 clearHistoryButton.addEventListener("click", () => {
     if(confirm("Are you sure you want to delete all chat history?")){
         localStorage.removeItem("chat-sessions");
         localStorage.removeItem("current-chat");
-
         chatContainer.innerHTML = '';
         typingInput.value = '';
         currentChatIndex = null;
@@ -153,13 +168,22 @@ const createMessageElement = (content, ...classes) => {
 
 const scrollToBottom = () => {
     if(shouldAutoScroll){
-        chatContainer.scrollTo(0, chatContainer.scrollHeight);
+        chatContainer.scrollTo({ top: chatContainer.scrollHeight, behavior: "smooth" });
     }
 };
 
 chatContainer.addEventListener("scroll", () => {
-    const isAtBottom = chatContainer.scrollHeight - chatContainer.scrollTop === chatContainer.clientHeight;
+    const isAtBottom = Math.abs(chatContainer.scrollHeight - chatContainer.scrollTop - chatContainer.clientHeight) < 1;
+    const isAtTop = chatContainer.scrollTop === 0;
     shouldAutoScroll = isAtBottom;
+    clearTimeout(scrollingTimeout);
+    scrollingTimeout = setTimeout(() => {
+        shouldAutoScroll = isAtBottom;
+    }, 200);
+
+    if(isAtTop){
+        console.log("User scrolled to the top");
+    }
 });
 
 const showTypingEffect = (text, textElement, incomingMessageDiv) => {
@@ -175,10 +199,8 @@ const showTypingEffect = (text, textElement, incomingMessageDiv) => {
         if(currentWordIndex === words.length){
             clearInterval(typingInterval);
             isResponseGenerating = false;
-
             const loadingDots = incomingMessageDiv.querySelector('.loading-dots');
             if(loadingDots) loadingDots.remove();
-
             localStorage.setItem("saved-chats", chatContainer.innerHTML);
             updateChatHistory();
             enableStartChatButton();
@@ -221,6 +243,7 @@ const generateAPIResponse = async (incomingMessageDiv, regenerate = false) => {
         textElement.parentElement.closest(".message").classList.add("error");
     }finally{
         incomingMessageDiv.classList.remove("loading");
+        scrollToBottom();
     }
 };
 
@@ -295,13 +318,15 @@ const generateChatTitle = async (userPrompt) => {
             body: JSON.stringify({
                 contents: [{
                     role: "user",
-                    parts: [{ text: `Generate a short, descriptive title for the following chat: ${userPrompt}` }]
+                    parts: [{
+                        text: `Generate a short, concise title (5 words or fewer) for the following chat: ${userPrompt}`
+                    }]
                 }]
             }),
         });
         const data = await response.json();
         if(response.ok){
-            return data?.candidates[0]?.content?.parts[0]?.text || "Untitled Session";
+            return data?.candidates[0]?.content?.parts[0]?.text.trim() || "Untitled Session";
         }else{
             throw new Error(data.error.message);
         }
@@ -384,15 +409,6 @@ voiceInputButton.addEventListener("click", () => {
     }
 });
 
-chatHistoryButton.addEventListener("click", () => {
-    displayChatSessions();
-    chatHistoryModal.classList.add('show');
-});
-
-closeHistoryButton.addEventListener("click", () => {
-    chatHistoryModal.classList.remove('show');
-});
-
 typingForm.addEventListener("submit", (e) => {
     e.preventDefault();
     hideModal(chatHistoryModal);
@@ -403,10 +419,11 @@ window.onload = () => {
     const savedChat = localStorage.getItem("current-chat");
     if(savedChat){
         chatContainer.innerHTML = savedChat;
-        scrollToBottom();
+
         if(chatContainer.innerHTML.trim()){
             hideHeader();
             showStartChatMessage();
+            scrollToBottom();
         }
     }else{
         hideStartChatMessage();
